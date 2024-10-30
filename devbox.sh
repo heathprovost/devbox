@@ -146,22 +146,6 @@ function trim() {
 }
 
 #
-# parses an rc file. Removes leading/trailing quotes and whitespace and ignores # comments
-#
-# @param string $1- The path to the rc file.
-# @globals - writes IFS
-#
-function load_rc {
-  local file="$1"
-
-  while IFS='=' read -r key value; do
-    key="${key// /}"  # Remove spaces from key
-    value="${value//\"/}"  # Remove quotes from value
-    eval "${key}=\"${value}\""
-  done < <(awk -F'=' '/^[^;#]/ {gsub(/^[ \t]+|[ \t]+$/, "", $1); gsub(/^[ \t]+|[ \t]+$/, "", $2); print $1 "=" $2}' "$file")
-}
-
-#
 # Run the installer command passed as 1st argument and shows the spinner until this is done
 #
 # @param string $1 - the installer command to run
@@ -337,42 +321,66 @@ function prepare_log() {
 #
 # Collects configuration options, either by prompting user or reading them from .devboxrc file
 #
-# @globals - reads and writes GIT_USER_NAME, GIT_USER_EMAIL, GIT_HUB_PKG_TOKEN
+# @globals - reads and writes DEVBOX_GIT_USER_NAME, DEVBOX_GIT_USER_EMAIL, GIT_HUB_PKG_TOKEN
 #
 function configure() {
-  # load .devboxrc if it exists
-  if [[ -f "$HOME/.devboxrc" ]]
-  then
-    load_rc "$HOME/.devboxrc"
-  fi
+  local rc_file="$HOME/.devboxrc"
+  local name
+  local email
+  local token
+  local output
+
+  # load configuration from .devboxrc file if it exists
+  while IFS='=' read -r key value; do
+    key="${key// /}"  # Remove spaces from key
+    value="${value//\"/}"  # Remove quotes from value
+    if [[ "$key" == "name" ]]
+    then
+      name="$value"
+    elif [[ "$key" == "email" ]]
+    then
+      email="$value"
+    elif [[ "$key" == "token" ]] && [[ -z "${GIT_HUB_PKG_TOKEN:-}" ]] # only set token if it is not already set in environment
+      token="$value"
+    fi
+  done < <(awk -F'=' '/^[^;#]/ {gsub(/^[ \t]+|[ \t]+$/, "", $1); gsub(/^[ \t]+|[ \t]+$/, "", $2); print $1 "=" $2}' "$rc_file")
+
   # if .devboxrc was sourced and everything is already set skip prompts
-  if [[ -n "${GIT_USER_NAME:-}" ]] && [[ -n "${GIT_USER_EMAIL:-}" ]] && [[ -n "${GIT_HUB_PKG_TOKEN:-}" ]]
+  if [[ -n "${name:-}" ]] && [[ -n "${email:-}" ]] && [[ -n "${token:-}" ]]
   then
     print_as "info" "Using existing \"~/.devboxrc\" file for configuration."
     printf "\n"
   else
     print_as "info" "Prompting for required configuration. Responses will be saved in \"~/.devboxrc\" for future use."
     printf "\n"
-    if [[ -z "${GIT_USER_NAME:-}" ]]
+    if [[ -z "${name:-}" ]]
     then
-      print_as "prompt" "Full name for git config: "
-      read GIT_USER_NAME
+      print_as "prompt" "Full name: "
+      read name
+      DEVBOX_GIT_USER_NAME=$(trim $name)
     fi
-    if [[ -z "${GIT_USER_EMAIL:-}" ]]
+    if [[ -z "${email:-}" ]]
     then
-      print_as "prompt" "Email address for git config: "
+      print_as "prompt" "Email address: "
       read email
-      GIT_USER_EMAIL=$(trim $email)
+      DEVBOX_GIT_USER_EMAIL=$(trim $email)
     fi
-    if [[ -z "${GIT_HUB_PKG_TOKEN:-}" ]]
+    if [[ -z "${token:-}" ]]
     then
-      print_as "prompt" "Github token for .npmrc file: "
-      read GIT_HUB_PKG_TOKEN
+      print_as "prompt" "Github token: "
+      read token
     fi
     printf "\n"
 
-    # save to .devboxrc for future use
-    printf "GIT_USER_NAME = $GIT_USER_NAME\nGIT_USER_EMAIL = $GIT_USER_EMAIL\nGIT_HUB_PKG_TOKEN = $GIT_HUB_PKG_TOKEN\n" > "$HOME/.devboxrc"
+    if [[ -z "${GIT_HUB_PKG_TOKEN:-}" ]]
+    then
+      GIT_HUB_PKG_TOKEN=$(trim $token)
+      # save to .devboxrc for future use, but omit the token since it is already in the environment
+      printf "name = $name\nemail = $email\n" > "$HOME/.devboxrc"
+    else
+      # save to .devboxrc for future use
+      printf "name = $name\nemail = $email\ntoken = $token\n" > "$HOME/.devboxrc"
+    fi
   fi
 }
 
@@ -385,6 +393,17 @@ function devbox_init() {
   validate_os
   prepare_log
   configure
+}
+
+#
+# Cleanup variables and environment
+# Note: there is no safe way to get the list of functions defined in a particular bash script, so we have to list them manually
+#
+function cleanup() {
+  local utils = "err resolve_suo print_as log trim install validate_commands validate_os validate_shell prepare_log configure devbox_init cleanup setup"
+  local installers = "install_common-packages install_git install_git-config install_dotnet-sdk install_java-jdk install_aws-cli install_fnm install_node install_nawsso"
+  unset "${!DEVBOX_@}" # unset all variables starting with DEVBOX_
+  unset -f $utils $installers # unset all functions defined in this script
 }
 
 #
@@ -483,7 +502,7 @@ function install_git() {
 #
 # Configure existing git install
 #
-# @globals - reads GIT_USER_NAME and GIT_USER_EMAIL
+# @globals - reads DEVBOX_GIT_USER_NAME and DEVBOX_GIT_USER_EMAIL
 #
 function install_git-config() {
   local credential_helper="$(which git-credential-manager 2> /dev/null || true)"
@@ -506,7 +525,7 @@ function install_git-config() {
   fi
 
   declare -a keys=( user.name user.email push.default core.autocrlf core.eol init.defaultbranch credential.helper )
-  declare -a values=( "$GIT_USER_NAME" "$GIT_USER_EMAIL" simple false lf main "$credential_helper" )
+  declare -a values=( "$DEVBOX_GIT_USER_NAME" "$DEVBOX_GIT_USER_EMAIL" simple false lf main "$credential_helper" )
   local length=${#keys[@]}
 
   # populate current with the current values read from git config
@@ -725,6 +744,8 @@ function install_nawsso() {
 # Execute a series of installer functions sequentially and report results
 #
 function setup() {
+  local completion_report
+
   # call init
   devbox_init
 
@@ -739,8 +760,10 @@ function setup() {
   install 'node' '20.18.0'
   install 'nawsso' '1.8.5'
 
-  # show completion report
-  completion_report
+  # capture output of completion report and perform cleanup
+  completion_report = "$(completion_report && cleanup)"
+
+  printf "$completion_report"
 }
 
 # only run when called directly and not sourced from another script (works in bash and zsh)
