@@ -340,7 +340,7 @@ function configure() {
     elif [[ "$key" == "email" ]]
     then
       email="$value"
-    elif [[ "$key" == "token" ]] && [[ -z "${GIT_HUB_PKG_TOKEN:-}" ]] # only set token if it is notalready set in environment
+    elif [[ "$key" == "token" ]]
     then
       token="$value"
     fi
