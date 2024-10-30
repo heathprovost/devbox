@@ -1,0 +1,8 @@
+.env
+.npmrc
+.devboxrc
+devbox.log
+
+# system files
+.DS_Store
+Thumbs.db
