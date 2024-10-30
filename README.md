@@ -81,7 +81,7 @@ bash <(wget -qO- https://raw.githubusercontent.com/heathprovost/devbox/main/devb
 
 ## 🧊 MacOS Using [OrbStack](https://orbstack.dev)
 
-Begin by opening a terminal session.
+Begin by opening a shell session in your terminal.
 
 ### 🔹Install Ubuntu
 
