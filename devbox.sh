@@ -532,7 +532,7 @@ function install_dotnet-sdk() {
 
   if [[ "$os" == "Ubuntu" ]]
   then
-    sudo apt-get -y dotnet-sdk-8.0
+    sudo apt-get -y install dotnet-sdk-8.0
   elif [[ "$os" == "MacOS" ]]
   then
     local taps="$(brew tap 2> /dev/null || true)"
