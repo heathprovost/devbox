@@ -325,6 +325,8 @@ function prepare_log() {
 #
 function configure() {
   local rc_file="$HOME/.devboxrc"
+  local key
+  local value
   local name
   local email
   local token
@@ -347,7 +349,7 @@ function configure() {
   done < <(awk -F'=' '/^[^;#]/ {gsub(/^[ \t]+|[ \t]+$/, "", $1); gsub(/^[ \t]+|[ \t]+$/, "", $2); print $1 "=" $2}' "$rc_file")
 
   # if .devboxrc was sourced and everything is already set skip prompts
-  if [[ -n "${name:-}" ]] && [[ -n "${email:-}" ]] && [[ -n "${token:-}" ]]
+  if [[ -n "${name:-}" ]] && [[ -n "${email:-}" ]]
   then
     print_as "info" "Using existing \"~/.devboxrc\" file for configuration."
     printf "\n"
@@ -366,22 +368,24 @@ function configure() {
       read email
       DEVBOX_GIT_USER_EMAIL=$(trim $email)
     fi
-    if [[ -z "${token:-}" ]] && [[ -z "${GIT_HUB_PKG_TOKEN:-}" ]]
+    if [[ -z "${token:-}" ]] && [[ -z "${GIT_HUB_PKG_TOKEN:-}" ]] # if token is already set in the environment, skip the prompt
     then
       print_as "prompt" "Github token: "
       read token
+      GIT_HUB_PKG_TOKEN=$(trim $token)
     fi
     printf "\n"
 
-    if [[ -z "${GIT_HUB_PKG_TOKEN:-}" ]]
+    output="name = $name\nemail = $email\n"
+
+    # if token was set, add it to the output, otherwise it was already in the environment
+    if [[ -n "${token:-}" ]]
     then
-      GIT_HUB_PKG_TOKEN=$(trim $token)
-      # save to .devboxrc for future use, but omit the token since it is already in the environment
-      printf "name = $name\nemail = $email\n" > "$HOME/.devboxrc"
-    else
-      # save to .devboxrc for future use
-      printf "name = $name\nemail = $email\ntoken = $token\n" > "$HOME/.devboxrc"
+      output="${output}token = $token\n"
     fi
+
+    # save to .devboxrc for future use
+    printf "$output" > "$HOME/.devboxrc"
   fi
 }
 
