@@ -401,8 +401,8 @@ function devbox_init() {
 # Note: there is no safe way to get the list of functions defined in a particular bash script, so we have to list them manually
 #
 function cleanup() {
-  local utils = "err resolve_suo print_as log trim install validate_commands validate_os validate_shell prepare_log configure devbox_init cleanup completion_report setup"
-  local installers = "install_common-packages install_git install_git-config install_dotnet-sdk install_java-jdk install_aws-cli install_fnm install_node install_nawsso"
+  local utils="err resolve_suo print_as log trim install validate_commands validate_os validate_shell prepare_log configure devbox_init cleanup completion_report setup"
+  local installers="install_common-packages install_git install_git-config install_dotnet-sdk install_java-jdk install_aws-cli install_fnm install_node install_nawsso"
   unset "${!DEVBOX_@}" # unset all variables starting with DEVBOX_
   unset -f $utils $installers # unset all functions defined in this script
 }
