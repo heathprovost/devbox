@@ -3,7 +3,7 @@
 Automated script magic for configuring machines, vms, or containers
 for development.
 
-![DevBox Demo](../assets/devbox-demo.gif?raw=true)
+![DevBox Demo](https://github.com/user-attachments/assets/c688d083-b9d6-45e1-a436-ebd9f3008f51)
 
 ## 🧊 Basic Instructions
 
