@@ -764,7 +764,7 @@ function setup() {
   # capture output of completion report and perform cleanup
   completion_report_output="$(completion_report && cleanup)"
 
-  printf "$completion_report_output"
+  printf "$completion_report_output\n"
 }
 
 # only run when called directly and not sourced from another script (works in bash and zsh)
