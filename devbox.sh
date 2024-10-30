@@ -111,8 +111,8 @@ function print_as() {
   eval "glyph=\${${msgtype}_glyph}"
   eval "color=\${${msgtype}_color}"
 
-  # use sed to highlight single quoted substrings in $2 and store as msg
-  local msg=$(echo -n -e "$(echo -e -n "$2" | sed -e "s/'\([^']*\)'/\\${blue}\1\\${reset}\\${color}/g")")
+  # use sed to highlight quoted substrings in $2 and store as msg
+  local msg=$(echo -n -e "$(echo -e -n "$2" | sed -e "s/'\([^'\\"]*\\)'/\\${blue}\1\\${reset}\\${color}/g")")
 
   # for prompts dont emit a linebreak
   if [ "$msgtype" = "prompt" ]; then
