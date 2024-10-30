@@ -354,7 +354,7 @@ function configure() {
     print_as "info" "Using existing \"~/.devboxrc\" file for configuration."
     printf "\n"
   else
-    print_as "info" "Prompting for required configuration. Responses will be saved in \"~/.devboxrc\" for future use."
+    print_as "info" "Responses will be saved in \"~/.devboxrc\" for future use."
     printf "\n"
     if [[ -z "${name:-}" ]]
     then
