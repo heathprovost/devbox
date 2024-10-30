@@ -526,7 +526,7 @@ function install_git-config() {
   fi
 
   declare -a keys=( user.name user.email push.default core.autocrlf core.eol init.defaultbranch credential.helper )
-  declare -a values=( "$DEVBOX_GIT_USER_NAME" "$DEVBOX_GIT_USER_EMAIL" simple false lf main "$credential_helper" )
+  declare -a values=( "${DEVBOX_GIT_USER_NAME:-}" "${DEVBOX_GIT_USER_EMAIL:-}" simple false lf main "$credential_helper" )
   local length=${#keys[@]}
 
   # populate current with the current values read from git config
@@ -745,7 +745,7 @@ function install_nawsso() {
 # Execute a series of installer functions sequentially and report results
 #
 function setup() {
-  local completion_report
+  local completion_report_output
 
   # call init
   devbox_init
@@ -762,9 +762,9 @@ function setup() {
   install 'nawsso' '1.8.5'
 
   # capture output of completion report and perform cleanup
-  completion_report = "$(completion_report && cleanup)"
+  completion_report_output = "$(completion_report && cleanup)"
 
-  printf "$completion_report"
+  printf "$completion_report_output"
 }
 
 # only run when called directly and not sourced from another script (works in bash and zsh)
