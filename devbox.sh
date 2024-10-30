@@ -366,7 +366,7 @@ function configure() {
       read email
       DEVBOX_GIT_USER_EMAIL=$(trim $email)
     fi
-    if [[ -z "${token:-}" ]]
+    if [[ -z "${token:-}" ]] && [[ -z "${GIT_HUB_PKG_TOKEN:-}" ]]
     then
       print_as "prompt" "Github token: "
       read token
