@@ -341,6 +341,7 @@ function configure() {
     then
       email="$value"
     elif [[ "$key" == "token" ]] && [[ -z "${GIT_HUB_PKG_TOKEN:-}" ]] # only set token if it is not already set in environment
+    then
       token="$value"
     fi
   done < <(awk -F'=' '/^[^;#]/ {gsub(/^[ \t]+|[ \t]+$/, "", $1); gsub(/^[ \t]+|[ \t]+$/, "", $2); print $1 "=" $2}' "$rc_file")
